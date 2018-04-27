@@ -9,6 +9,7 @@
 import UIKit
 import RxSwift
 import RxCocoa
+import ReSwift
 
 class TermsViewController: UIViewController {
 
@@ -34,40 +35,40 @@ class TermsViewController: UIViewController {
 }
 
 extension TermsViewController {
-    
+
     private func bindState() {
-        viewModel.state
+        viewModel.displayState
                  .asObservable()
                  .subscribe(onNext: { [weak self] state in
-                    self?.activityIndicator.isHidden = state != .loading
-                    self?.tableView.isHidden = state != .loaded
-                    self?.retryButton.isHidden = state != .error
+                    self?.activityIndicator.isHidden = state != .empty
+                    self?.tableView.isHidden = state != .ready
+                    self?.retryButton.isHidden = state != .needsToRetry
                  })
                  .disposed(by: disposeBag)
     }
-    
+
     private func bindTableView() {
-        viewModel.terms
+        viewModel.items
                  .asObservable()
-                 .bind(to: tableView.rx.items(cellIdentifier: "Cell")) { _, termRow, cell in
-                    cell.textLabel?.text = termRow.title
-                    cell.detailTextLabel?.text = termRow.content
-                    cell.accessoryType = termRow.accepted ? .checkmark : .none
+                 .bind(to: tableView.rx.items(cellIdentifier: "Cell")) { _, item, cell in
+                    cell.textLabel?.text = item.name
+                    cell.detailTextLabel?.text = item.content
+                    cell.accessoryType = item.accepted ? .checkmark : .none
                 }
                 .disposed(by: disposeBag)
-        
+
         tableView.rx
             .itemSelected
-            .subscribe() { [weak self] event in
+            .subscribe() { event in
                 if let indexPath = event.element {
-                    self?.viewModel.selection.onNext(indexPath.row)
+                    store.dispatch(TermsListAction.accept(indexPath.row))
                 }
             }
             .disposed(by: disposeBag)
     }
-    
+
     private func bindProceedButton() {
-        viewModel.canProceed.bind(to: proceedBarButtonItem.rx.isEnabled).disposed(by: disposeBag)
+        viewModel.canProceed.asObservable().bind(to: proceedBarButtonItem.rx.isEnabled).disposed(by: disposeBag)
     }
-    
+
 }

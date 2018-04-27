@@ -6,50 +6,35 @@
 //  Copyright © 2018 André Gimenez Faria. All rights reserved.
 //
 
+import ReSwift
 import RxSwift
-
-enum TermsListState {
-    case loading
-    case loaded
-    case error
-}
 
 class TermsViewModel {
     
-    var state = Variable(TermsListState.loading)
-    
-    var terms = Variable<[(title: String, content: String, accepted: Bool)]>([])
-    
-    var selection = PublishSubject<Int>()
-    
-    var canProceed: Observable<Bool>
-    
-    private let disposeBag = DisposeBag()
+    var displayState = Variable(store.state.termListState.displayState)
+
+    var items = Variable<[TermListItem]>([])
+
+    var canProceed = Variable(store.state.termListState.canProcceed)
     
     init() {
-        self.canProceed = terms.asObservable().map { $0.reduce(true) { $0 && $1.accepted } }
-
-        state.asObservable()
-             .filter { $0 == .loading }
-             .concatMap { _ in TermFetcher.terms() }
-             .subscribe(
-              onNext: { [weak self] in
-                self?.terms.value = $0.map {
-                    (title: $0.name, content: $0.content, accepted: false)
-                }
-                self?.state.value = .loaded
-              },
-              onError: { [weak self] _ in
-                self?.state.value = .error
-              })
-             .disposed(by: disposeBag)
-        
-        selection.asObserver()
-                  .subscribe(onNext: { [weak self] index in
-                        self?.terms.value[index].accepted = true
-                  })
-                  .disposed(by: disposeBag)
-        
+        store.subscribe(self) { $0.select { $0.termListState } }
+        store.dispatch(TermsFetchAction.load)
     }
     
+    deinit {
+        store.unsubscribe(self)
+    }
+    
+}
+
+extension TermsViewModel: StoreSubscriber {
+    
+    typealias StoreSubscriberStateType = TermListStateNew
+
+    func newState(state: TermListStateNew) {
+        displayState.value = state.displayState
+        items.value = state.items
+        canProceed.value = state.canProcceed
+    }
 }

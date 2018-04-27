@@ -12,11 +12,31 @@ import RxSwift
 enum TermFetchError: Error {
     case missingJson
     case badJson
+    case unknown
 }
 
 struct TermFetcher {
     
-    static func terms(from jsonName: String = "terms") -> Observable<[Term]> {
+    static let shared = TermFetcher()
+    
+    private let disposeBag = DisposeBag()
+    
+    func fetchTerms(from jsonName: String = "terms") {
+        terms(from: jsonName)
+            .subscribe(onNext: { terms in
+                store.dispatch(TermsFetchAction.loaded(terms))
+                store.dispatch(TermsListAction.load)
+            },
+            onError: { error in
+                DispatchQueue.main.async {
+                    store.dispatch(TermsFetchAction.failed(error as? TermFetchError ?? .unknown))
+                    store.dispatch(TermsListAction.showRetry)
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func terms(from jsonName: String = "terms") -> Observable<[Term]> {
         guard let filePath = Bundle.main.path(forResource: jsonName, ofType: "json") else {
             return Observable.error(TermFetchError.missingJson)
         }

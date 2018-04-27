@@ -6,5 +6,6 @@ target 'ReactiveTerms' do
   use_frameworks!
   pod 'RxSwift'
   pod 'RxCocoa'
+  pod 'ReSwift'
 
 end
