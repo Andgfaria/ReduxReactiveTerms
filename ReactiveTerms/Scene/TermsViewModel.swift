@@ -30,9 +30,9 @@ class TermsViewModel {
 
 extension TermsViewModel: StoreSubscriber {
     
-    typealias StoreSubscriberStateType = TermListStateNew
+    typealias StoreSubscriberStateType = TermListState
 
-    func newState(state: TermListStateNew) {
+    func newState(state: TermListState) {
         displayState.value = state.displayState
         items.value = state.items
         canProceed.value = state.canProcceed

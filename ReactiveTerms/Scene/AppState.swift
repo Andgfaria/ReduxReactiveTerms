@@ -23,7 +23,7 @@ enum TermsListDisplayState {
 
 typealias TermListItem = (name: String, content: String, accepted: Bool)
 
-struct TermListStateNew: StateType {
+struct TermListState: StateType {
     var displayState = TermsListDisplayState.empty
     var items: [TermListItem] = []
     var canProcceed: Bool {
@@ -36,5 +36,5 @@ struct TermListStateNew: StateType {
 
 struct AppState: StateType {
     var termsFetchState = TermsFetchState.loading
-    var termListState = TermListStateNew()
+    var termListState = TermListState()
 }
